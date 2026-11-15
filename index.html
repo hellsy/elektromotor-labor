@@ -1,0 +1,1109 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Elektromotor-Labor</title>
+<style>:root{color-scheme:light;box-sizing:border-box}body{margin:0;padding:0}img{max-width:100%}</style>
+</head>
+<body>
+<title>Elektromotor-Labor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: Labortisch – große Simulationsfläche links, Steuerpult + 3D-Hand rechts; auf dem Handy untereinander.
+   Farbcode wie im Lorentzkraft-Labor: I = blau (Daumen), B = grün (Zeigefinger), F = orange (Mittelfinger).
+   Neu: Schleifenhälfte 1 = violett, Schleifenhälfte 2 = ocker (auch am Kommutator). */
+:root {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --stage: #f8f9fb;
+  --ink: #18202d;
+  --muted: #5a6476;
+  --line: #d4d9e2;
+  --grid: #e3e7ee;
+  --grid-strong: #cfd5df;
+  --accent: #2b52c4;
+  --c-v: #2b52c4;
+  --c-b: #18865a;
+  --c-f: #e0561b;
+  --c-e: #b07f00;
+  --h1: #7a4fc4;
+  --h2: #b07f00;
+  --north: #c42f3c;
+  --south: #2c8653;
+  --skin: #f0c9a4;
+  --skin-edge: #b5865f;
+  --metal: #9aa3b1;
+  --good: #1d7f4e;
+  --bad: #c0392b;
+  --font-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f131a; --surface: #171d26; --stage: #11161e; --ink: #e6eaf1; --muted: #98a2b4;
+    --line: #29313e; --grid: #1b222c; --grid-strong: #252e3b; --accent: #7f9cff;
+    --c-v: #7f9cff; --c-b: #42cf8f; --c-f: #ff8a4a; --c-e: #efc246; --h1: #b497ff; --h2: #efc246;
+    --north: #ff5c68; --south: #4cc484; --skin: #e2b48d; --skin-edge: #96694a; --metal: #6f7a8a;
+    --good: #4cc484; --bad: #ff6b5e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f131a; --surface: #171d26; --stage: #11161e; --ink: #e6eaf1; --muted: #98a2b4;
+  --line: #29313e; --grid: #1b222c; --grid-strong: #252e3b; --accent: #7f9cff;
+  --c-v: #7f9cff; --c-b: #42cf8f; --c-f: #ff8a4a; --c-e: #efc246; --h1: #b497ff; --h2: #efc246;
+  --north: #ff5c68; --south: #4cc484; --skin: #e2b48d; --skin-edge: #96694a; --metal: #6f7a8a;
+  --good: #4cc484; --bad: #ff6b5e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+.wrap { max-width: 1260px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.1; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 .f { color: var(--c-f); }
+.sub { margin: 4px 0 0; color: var(--muted); max-width: 60ch; }
+.legend-chips { display: flex; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
+.chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 700px) { .tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tab {
+  font: 600 14.5px/1.2 var(--font-body); color: var(--ink); background: var(--surface); cursor: pointer; text-align: left;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; min-width: 0;
+}
+.tab:hover { border-color: var(--accent); }
+.tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.tab .num { font-family: var(--font-mono); font-weight: 500; font-size: 12px; opacity: 0.75; margin-right: 6px; }
+.tab small { display: block; font-weight: 400; font-size: 12px; margin-top: 3px; color: var(--muted); }
+.tab[aria-selected="true"] small { color: var(--surface); opacity: 0.85; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 16px; align-items: start; }
+@media (max-width: 920px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.stage { background: var(--stage); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; min-width: 0; }
+#sim { display: block; width: 100%; height: clamp(340px, 64vh, 640px); touch-action: manipulation; }
+@media (max-width: 600px) { #sim { height: 420px; } }
+.stage-bar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--surface); font-size: 13px; color: var(--muted); }
+.stage-bar b { color: var(--ink); font-weight: 500; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.panel { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.card h2 { font: 700 13px/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0; }
+.ctl { display: flex; flex-direction: column; gap: 4px; }
+.ctl-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 14px; }
+.ctl-head output { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 2px 0; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { flex: 1; text-align: center; padding: 7px 6px; font-size: 13px; cursor: pointer; color: var(--muted); border-left: 1px solid var(--line); user-select: none; }
+.seg label:first-of-type { border-left: 0; }
+.seg input:checked + label { background: var(--accent); color: var(--surface); font-weight: 600; }
+.seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -3px; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; cursor: pointer; }
+.check input { accent-color: var(--accent); width: 16px; height: 16px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+button.btn {
+  font: 600 13px/1 var(--font-body); padding: 9px 14px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button.btn:hover { border-color: var(--muted); }
+button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button.btn.flip { background: var(--c-f); border-color: var(--c-f); color: var(--surface); font-size: 15px; padding: 13px 16px; flex: 1; }
+button:focus-visible, .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.readouts { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; margin: 0; }
+.readouts dt { color: var(--muted); }
+.readouts dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+.formula { font-family: var(--font-mono); font-size: 13.5px; background: var(--bg); border-radius: 6px; padding: 8px 10px; line-height: 1.7; overflow-x: auto; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+#hand { display: block; width: 100%; height: 250px; cursor: grab; touch-action: none; border-radius: 8px; background: var(--stage); }
+#hand:active { cursor: grabbing; }
+.hand-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hand-name { font-family: var(--font-display); font-weight: 700; font-size: 18px; }
+.fingers { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.fingers li { display: grid; grid-template-columns: 12px 92px 1fr; gap: 8px; align-items: baseline; }
+.fingers i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; transform: translateY(1px); }
+.fingers span:last-child { color: var(--muted); }
+.quiz-task { font-size: 15px; margin: 0; min-height: 4.5em; }
+.answers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.answers button { font: 600 14px/1.2 var(--font-body); padding: 10px 4px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.answers button .sym { font-size: 22px; line-height: 1; }
+.answers button small { font-weight: 400; font-size: 11px; color: var(--muted); }
+.answers button:hover:not(:disabled) { border-color: var(--c-f); }
+.answers button.right { border-color: var(--good); box-shadow: inset 0 0 0 1px var(--good); }
+.answers button.wrong { border-color: var(--bad); box-shadow: inset 0 0 0 1px var(--bad); }
+.answers button:disabled { cursor: default; }
+.feedback { font-size: 14px; margin: 0; min-height: 3em; }
+.feedback.ok strong { color: var(--good); }
+.feedback.no strong { color: var(--bad); }
+.explain { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.explain .card p { margin: 0; font-size: 14px; max-width: 65ch; }
+.explain h3 { font-family: var(--font-display); font-size: 17px; margin: 0; }
+.main-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.tasks h2 { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.tasks .lead { margin: 0; font-size: 14.5px; max-width: 70ch; }
+.tasklist { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 16px; }
+.tasklist > li { padding-left: 4px; }
+.tasklist > li::marker { font-family: var(--font-display); font-weight: 700; color: var(--accent); }
+.tasklist p { margin: 0 0 6px; max-width: 70ch; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; margin-right: 6px; vertical-align: 1px; }
+.tag.do { background: var(--grid-strong); color: var(--ink); }
+.tag.plus { background: var(--c-e); color: var(--surface); }
+.tasks textarea, .tasks input[type="text"], .tasks select {
+  width: 100%; font: 14px/1.4 var(--font-body); color: var(--ink); background: var(--stage);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px;
+}
+.tasks textarea { resize: vertical; min-height: 2.6em; }
+.tasks select { width: auto; display: inline-block; padding: 3px 6px; }
+.tasks textarea:focus, .tasks input:focus, .tasks select:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+.gap-text { line-height: 2.2; }
+.mtable-wrap { overflow-x: auto; }
+.mtable { border-collapse: collapse; font-size: 14px; }
+.mtable th, .mtable td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; }
+.mtable th { background: var(--bg); font-weight: 600; white-space: nowrap; }
+.mtable td.l { text-align: left; }
+.mtable input[type="text"] { width: 6.5em; padding: 3px 6px; text-align: center; font-family: var(--font-mono); }
+.sol { display: none; margin-top: 6px; font-size: 13.5px; border-left: 3px solid var(--good); padding: 4px 10px; background: var(--bg); border-radius: 0 6px 6px 0; max-width: 70ch; }
+body.sol-on .sol { display: block; }
+.card.task-foot { flex-direction: row; }
+.task-foot { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 12px; }
+.sol-gate, .sol-code { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.sol-code input { font: 14px var(--font-mono); color: var(--ink); background: var(--stage); border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; max-width: 100%; }
+.sol-code input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+kbd { font: 500 12px var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; background: var(--stage); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Elektromotor-Labor <span class="f">·</span> Vom Leiter zum Motor</h1>
+      <p class="sub">Aus der Kraft auf einen Leiter wird eine Drehung. Bau den Motor in drei Schritten zusammen und finde heraus, warum er einen Kommutator braucht.</p>
+    </div>
+    <div class="legend-chips" aria-label="Farbcode">
+      <span class="chip"><i style="background:var(--c-v)"></i>Daumen: I</span>
+      <span class="chip"><i style="background:var(--c-b)"></i>Zeigefinger: B</span>
+      <span class="chip"><i style="background:var(--c-f)"></i>Mittelfinger: F</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Stationen">
+    <button class="tab" role="tab" data-mode="schleife" type="button"><span class="num">1</span>Drehbare Leiterschleife<small>Warum dreht sie sich nicht weiter?</small></button>
+    <button class="tab" role="tab" data-mode="kommutator" type="button"><span class="num">2</span>Kommutator<small>Der Trick mit dem Stromwender</small></button>
+    <button class="tab" role="tab" data-mode="werkstatt" type="button"><span class="num">3</span>Motor-Werkstatt<small>Zusatz: Spulen, Windungen, Last</small></button>
+    <button class="tab" role="tab" data-mode="uebung" type="button"><span class="num">4</span>Übung<small>Drehrichtung bestimmen</small></button>
+  </nav>
+
+  <div class="layout">
+    <div class="main-col">
+      <section class="stage" aria-label="Simulation">
+        <canvas id="sim" aria-label="Simulationsfläche"></canvas>
+        <div class="stage-bar" id="stage-bar"></div>
+      </section>
+
+      <!-- Arbeitsaufträge -->
+      <section class="card tasks mode-panel" data-mode="schleife">
+        <h2><span>Arbeitsauftrag · Station 1</span><span>Drehbare Leiterschleife</span></h2>
+        <p class="lead">Eine rechteckige Leiterschleife ist zwischen den Polen eines Magneten drehbar gelagert. Über zwei Schleifringe fließt Strom durch die Schleife. Die beiden langen Seiten heißen Leiterseite 1 (violett) und Leiterseite 2 (ocker).</p>
+        <ol class="tasklist">
+          <li><p><span class="tag do">Aufbau</span>Öffne den Schalter und sieh dir das Schrägbild an. Benenne die Bauteile. Verfolge den Weg des Stroms vom Pluspol bis zum Minuspol.</p>
+            <textarea id="e1-1" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Feldmagnet (N und S), drehbare Leiterschleife auf einer Achse, zwei Schleifringe mit Schleifkontakten, Stromquelle. Strom: vom Pluspol zum rechten Schleifkontakt, über den hinteren Ring in Leiterseite 1 nach hinten, durch die hintere Verbindung, in Leiterseite 2 nach vorne, über den vorderen Ring und den linken Kontakt zum Minuspol.</p></li>
+          <li><p><span class="tag do">Regel</span>Stelle die Schleife mit dem Regler waagerecht (0°). Bestimme mit der Drei-Finger-Regel der rechten Hand die Kraft auf Leiterseite 1 und auf Leiterseite 2. Prüfe mit den Kraftpfeilen.</p>
+            <textarea id="e1-2" rows="2" placeholder="Leiterseite 1: … Leiterseite 2: …"></textarea>
+            <p class="sol">Leiterseite 1 (rechts): Daumen in die Zeichenebene hinein (Strom), Zeigefinger nach rechts (von N nach S), Mittelfinger zeigt nach unten. In Leiterseite 2 fließt der Strom entgegengesetzt, die Kraft zeigt nach oben. Zusammen drehen die beiden Kräfte die Schleife im Uhrzeigersinn.</p></li>
+          <li><p><span class="tag do">Beobachten</span>Schließe den Schalter und lass die Schleife aus der waagerechten Stellung los. Beschreibe die Bewegung. In welcher Stellung bleibt die Schleife stehen?</p>
+            <textarea id="e1-3" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Die Schleife dreht sich los, pendelt ein paar Mal hin und her und bleibt dann senkrecht stehen (90°, quer zu den Feldlinien). Sie macht keine ganze Umdrehung.</p></li>
+          <li><p><span class="tag do">Erklären</span>Wechsle zur Ansicht „Entlang der Achse“. Vergleiche die Kraftpfeile bei 0° und bei 90°. Warum dreht sich die Schleife bei 90° nicht weiter?</p>
+            <textarea id="e1-4" rows="3" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Die Kräfte sind bei 90° genauso groß wie bei 0°. Sie ziehen die Schleife jetzt aber nur noch auseinander und drehen sie nicht mehr. Diese Stellung heißt Totpunkt. Schwingt die Schleife über den Totpunkt hinaus, drehen die Kräfte sie wieder zurück.</p></li>
+          <li><p><span class="tag do">Ausprobieren</span>Du bist jetzt der Motor-Chef: Drücke im richtigen Moment auf „Umpolen“ (oder die <kbd>Leertaste</kbd>). Schaffst du 5 Umdrehungen am Stück? In welchen Stellungen musst du umpolen?</p>
+            <textarea id="e1-5" rows="2" placeholder="Deine Antwort und dein Rekord"></textarea>
+            <p class="sol">Man muss immer dann umpolen, wenn die Schleife durch die senkrechte Stellung (den Totpunkt) schwingt, also zweimal pro Umdrehung. Dann drehen die Kräfte die Schleife weiter statt zurück.</p></li>
+          <li><p><span class="tag plus">Zusatz</span>Von Hand umpolen ist mühsam. Was müsste ein Bauteil können, das dir diese Arbeit abnimmt?</p>
+            <textarea id="e1-6" rows="2" placeholder="Deine Idee"></textarea>
+            <p class="sol">Es müsste die Stromrichtung in der Schleife automatisch nach jeder halben Umdrehung umkehren, genau im Totpunkt. Dieses Bauteil gibt es: den Kommutator (Stromwender), siehe Station 2.</p></li>
+        </ol>
+      </section>
+
+      <section class="card tasks mode-panel" data-mode="kommutator" hidden>
+        <h2><span>Arbeitsauftrag · Station 2</span><span>Kommutator</span></h2>
+        <p class="lead">Die beiden Schleifringe sind durch einen einzigen Ring ersetzt, der in zwei Hälften geteilt ist. Das ist der Kommutator. Jede Hälfte ist mit einem Ende der Schleife verbunden.</p>
+        <ol class="tasklist">
+          <li><p><span class="tag do">Aufbau</span>Vergleiche mit Station 1. Was hat sich am Aufbau geändert? Achte auf die Farben der Ringhälften.</p>
+            <textarea id="e2-1" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Statt zwei ganzen Schleifringen gibt es einen geteilten Ring. Die violette Hälfte gehört zu Leiterseite 1, die ockerfarbene zu Leiterseite 2. Die beiden festen Schleifkontakte (Bürsten) berühren bei der Drehung abwechselnd die eine und die andere Hälfte.</p></li>
+          <li><p><span class="tag do">Beobachten</span>Schalte „Zeitlupe“ ein und wähle „Entlang der Achse“. Beobachte die Stromrichtung in Leiterseite 1 (⊗ oder ⊙) während einer ganzen Umdrehung. Was fällt dir auf?</p>
+            <textarea id="e2-2" rows="3" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Die Stromrichtung in Leiterseite 1 wechselt nach jeder halben Umdrehung, immer im Totpunkt. Der Leiter, der gerade rechts ist, hat deshalb immer dieselbe Stromrichtung (⊗), der linke immer ⊙. Die Kraft zeigt rechts immer nach unten und links immer nach oben. Die Schleife dreht sich immer in dieselbe Richtung weiter.</p></li>
+          <li><p><span class="tag do">Totpunkt</span>Drücke „Auf Totpunkt stellen“. Läuft der Motor von allein an? Warum bleibt er im Betrieb trotzdem nicht im Totpunkt hängen?</p>
+            <textarea id="e2-3" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Nein. Im Totpunkt liegen die Bürsten auf dem Spalt zwischen den Ringhälften, es fließt kein Strom und es gibt keine Drehwirkung. Im Betrieb hat die Schleife Schwung und dreht sich über den Totpunkt hinweg.</p></li>
+          <li><p><span class="tag do">Verändern</span>In welche Richtung dreht sich der Motor? Fülle die Tabelle aus.</p>
+            <div class="mtable-wrap"><table class="mtable">
+              <tr><th>Einstellung</th><th>Drehrichtung</th></tr>
+              <tr><td class="l">Start (N links, + rechts)</td><td><select id="e2-v1"><option value="">…</option><option>im Uhrzeigersinn</option><option>gegen den Uhrzeigersinn</option></select></td></tr>
+              <tr><td class="l">Magnet umgedreht (N rechts)</td><td><select id="e2-v2"><option value="">…</option><option>im Uhrzeigersinn</option><option>gegen den Uhrzeigersinn</option></select></td></tr>
+              <tr><td class="l">Stromquelle umgepolt (+ links)</td><td><select id="e2-v3"><option value="">…</option><option>im Uhrzeigersinn</option><option>gegen den Uhrzeigersinn</option></select></td></tr>
+              <tr><td class="l">Magnet und Stromquelle umgedreht</td><td><select id="e2-v4"><option value="">…</option><option>im Uhrzeigersinn</option><option>gegen den Uhrzeigersinn</option></select></td></tr>
+            </table></div>
+            <p class="sol">Im Uhrzeigersinn, gegen, gegen, im Uhrzeigersinn. Dreht man eine Sache um, ändert sich die Drehrichtung. Dreht man beides um, bleibt sie gleich.</p></li>
+          <li><p><span class="tag do">Messen</span>Stelle B = 100 mT ein. Lies die Kraft auf eine Leiterseite für verschiedene Stromstärken ab (Länge der Leiterseite: 5 cm).</p>
+            <div class="mtable-wrap"><table class="mtable">
+              <tr><th>I in A</th><td>1,0</td><td>2,0</td><td>3,0</td><td>4,0</td></tr>
+              <tr><th>F in mN</th><td><input type="text" id="e2-m1" aria-label="F bei 1 A"></td><td><input type="text" id="e2-m2" aria-label="F bei 2 A"></td><td><input type="text" id="e2-m3" aria-label="F bei 3 A"></td><td><input type="text" id="e2-m4" aria-label="F bei 4 A"></td></tr>
+            </table></div>
+            <p class="gap-text">Verdoppelt man die Stromstärke, dann
+              <select id="e2-g1" aria-label="Lücke 1"><option value="">…</option><option>verdoppelt sich</option><option>halbiert sich</option><option>bleibt gleich</option></select> die Kraft.
+              Der Motor dreht sich dann
+              <select id="e2-g2" aria-label="Lücke 2"><option value="">…</option><option>schneller</option><option>langsamer</option><option>gleich schnell</option></select>.</p>
+            <p class="sol">5,0 / 10,0 / 15,0 / 20,0 mN. Die Kraft verdoppelt sich (F ist proportional zu I). Der Motor dreht sich schneller.</p></li>
+          <li><p><span class="tag plus">Zusatz</span>Das kleine Diagramm oben rechts zeigt die Drehwirkung der Kräfte während einer Umdrehung. Erkläre damit, warum dieser einfache Motor nicht gleichmäßig läuft.</p>
+            <textarea id="e2-6" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Die Drehwirkung schwankt. Sie ist am größten, wenn die Schleife waagerecht steht, und null im Totpunkt. Das passiert zweimal pro Umdrehung, deshalb läuft der Motor ruckelig.</p></li>
+        </ol>
+      </section>
+
+      <section class="card tasks mode-panel" data-mode="werkstatt" hidden>
+        <h2><span>Zusatzauftrag</span><span>Motor-Werkstatt</span></h2>
+        <p class="lead">Hier kannst du den Motor umbauen: mehr Spulen auf dem Anker, mehr Windungen pro Spule und eine Bremse als Last. Bei mehreren Spulen hat der Kommutator für jede Spule ein eigenes Lamellenpaar. Es fließt immer nur durch die Spule Strom, die gerade am günstigsten steht.</p>
+        <ol class="tasklist">
+          <li><p><span class="tag do">Vergleichen</span>Wähle 1 Spule und drücke „Auf Totpunkt stellen“. Wiederhole den Versuch mit 3 Spulen. Was beobachtest du?</p>
+            <textarea id="e3-1" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Mit 1 Spule bleibt der Motor im Totpunkt stehen. Mit 3 Spulen läuft er aus jeder Stellung an, weil immer eine der Spulen günstig im Feld steht.</p></li>
+          <li><p><span class="tag do">Beobachten</span>Vergleiche das Diagramm der Drehwirkung für 1, 2 und 3 Spulen. Beschreibe den Unterschied.</p>
+            <textarea id="e3-2" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Bei 1 Spule fällt die Drehwirkung zweimal pro Umdrehung auf null. Bei 2 und 3 Spulen bleibt sie immer groß und schwankt nur wenig. Der Motor läuft gleichmäßiger und hat keinen Totpunkt mehr.</p></li>
+          <li><p><span class="tag do">Testen</span>Stelle I = 2,0 A, B = 100 mT und die Last auf 20 % ein. Welcher Motor schafft das: 1 Spule oder 3 Spulen (jeweils 1 Windung)?</p>
+            <textarea id="e3-3" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Der Motor mit 1 Spule bleibt am Totpunkt hängen. Der Motor mit 3 Spulen läuft weiter (etwa 40 Umdrehungen pro Minute).</p></li>
+          <li><p><span class="tag do">Tüfteln</span>Erhöhe die Last auf 50 %. Finde zwei verschiedene Umbauten, mit denen der Motor die Last trotzdem schafft.</p>
+            <textarea id="e3-4" rows="2" placeholder="Umbau 1: … Umbau 2: …"></textarea>
+            <p class="sol">Zum Beispiel: 3 Spulen mit je 3 Windungen. Oder 3 Spulen mit 2 Windungen und dazu größere Stromstärke oder stärkerer Magnet. Mehr Windungen, mehr Strom und ein stärkeres Feld vergrößern die Kraft (F = N · I · l · B).</p></li>
+          <li><p><span class="tag plus">Rekord</span>Baue ohne Last den schnellsten Motor. Notiere deine Einstellungen und die Drehzahl.</p>
+            <input type="text" id="e3-5" placeholder="z. B. 3 Spulen, … Windungen, I = … A, B = … mT: … U/min"></li>
+          <li><p><span class="tag plus">Zusatz</span>Nenne drei Geräte aus dem Alltag, in denen ein Elektromotor steckt. Was haben echte Motoren, was unser Modell nicht hat?</p>
+            <textarea id="e3-6" rows="2" placeholder="Deine Antwort"></textarea>
+            <p class="sol">Zum Beispiel Akkuschrauber, Ventilator, Mixer, E-Bike, Scheibenwischer, Modellauto. Echte Motoren haben viele Spulen mit sehr vielen Windungen auf einem Eisenkern, oft Elektromagnete statt Dauermagneten und Kugellager.</p></li>
+        </ol>
+      </section>
+
+      <section class="card tasks mode-panel" data-mode="uebung" hidden>
+        <h2><span>Arbeitsauftrag · Station 3</span><span>Übung</span></h2>
+        <ol class="tasklist">
+          <li><p><span class="tag do">Üben</span>Löse mindestens 10 Aufgaben auf Stufe 1. Benutze dabei deine eigene rechte Hand. Trage dein Ergebnis ein.</p>
+            <input type="text" id="e4-1" placeholder="z. B. 8 von 10 richtig"></li>
+          <li><p><span class="tag do">Erklären</span>Wähle eine Aufgabe aus und erkläre deinem Partner Schritt für Schritt, wie du die Drehrichtung gefunden hast. Schreibe die Schritte auf.</p>
+            <textarea id="e4-2" rows="3" placeholder="1. … 2. … 3. …"></textarea>
+            <p class="sol">1. Rechte Hand: Daumen in Stromrichtung von Leiterseite 1 (⊗ hinein, ⊙ heraus). 2. Zeigefinger in Feldrichtung (von N nach S). 3. Der Mittelfinger zeigt die Kraft auf Leiterseite 1. 4. Auf Leiterseite 2 wirkt die Kraft in die Gegenrichtung. 5. Überlegen, in welche Richtung dieses Kräftepaar die Schleife dreht. Steht die Schleife senkrecht, gibt es keine Drehung.</p></li>
+          <li><p><span class="tag plus">Zusatz</span>Schaffst du eine Serie von 5 richtigen Antworten auf Stufe 2?</p>
+            <input type="text" id="e4-3" placeholder="Beste Serie"></li>
+        </ol>
+      </section>
+    </div>
+
+    <aside class="panel">
+      <!-- Einstellungen für Stationen 1 bis 3 -->
+      <div class="card" id="sim-panel">
+        <h2>Einstellungen</h2>
+        <div class="ctl">
+          <span class="ctl-head">Ansicht</span>
+          <div class="seg" role="radiogroup" aria-label="Ansicht">
+            <input type="radio" name="c-view" id="c-view-3d" value="3d" checked><label for="c-view-3d">Schrägbild</label>
+            <input type="radio" name="c-view" id="c-view-flat" value="flat"><label for="c-view-flat">Entlang der Achse</label>
+          </div>
+        </div>
+        <div class="btn-row" data-show="schleife"><button class="btn flip" id="c-flip" type="button">Umpolen ⇄</button></div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="c-phi">Schleife von Hand drehen</label><output id="o-c-phi"></output></div>
+          <input type="range" id="c-phi" min="0" max="360" step="1" value="20">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="c-i">Stromstärke I</label><output id="o-c-i"></output></div>
+          <input type="range" id="c-i" min="0.5" max="4" step="0.1" value="2">
+        </div>
+        <div class="ctl">
+          <div class="ctl-head"><label for="c-b">Flussdichte B</label><output id="o-c-b"></output></div>
+          <input type="range" id="c-b" min="50" max="150" step="5" value="100">
+        </div>
+        <div class="ctl">
+          <span class="ctl-head">Magnet</span>
+          <div class="seg" role="radiogroup" aria-label="Lage der Pole">
+            <input type="radio" name="c-pole" id="c-pole-l" value="1" checked><label for="c-pole-l">N links</label>
+            <input type="radio" name="c-pole" id="c-pole-r" value="-1"><label for="c-pole-r">N rechts</label>
+          </div>
+        </div>
+        <div class="ctl">
+          <span class="ctl-head">Stromquelle</span>
+          <div class="seg" role="radiogroup" aria-label="Polung der Stromquelle">
+            <input type="radio" name="c-pol" id="c-pol-r" value="1" checked><label for="c-pol-r">+ rechts</label>
+            <input type="radio" name="c-pol" id="c-pol-l" value="-1"><label for="c-pol-l">+ links</label>
+          </div>
+        </div>
+        <div class="ctl" data-show="werkstatt">
+          <span class="ctl-head">Spulen auf dem Anker</span>
+          <div class="seg" role="radiogroup" aria-label="Anzahl der Spulen">
+            <input type="radio" name="c-coils" id="c-coils-1" value="1" checked><label for="c-coils-1">1</label>
+            <input type="radio" name="c-coils" id="c-coils-2" value="2"><label for="c-coils-2">2</label>
+            <input type="radio" name="c-coils" id="c-coils-3" value="3"><label for="c-coils-3">3</label>
+          </div>
+        </div>
+        <div class="ctl" data-show="werkstatt">
+          <span class="ctl-head">Windungen pro Spule N</span>
+          <div class="seg" role="radiogroup" aria-label="Windungen pro Spule">
+            <input type="radio" name="c-n" id="c-n-1" value="1" checked><label for="c-n-1">1</label>
+            <input type="radio" name="c-n" id="c-n-2" value="2"><label for="c-n-2">2</label>
+            <input type="radio" name="c-n" id="c-n-3" value="3"><label for="c-n-3">3</label>
+          </div>
+        </div>
+        <div class="ctl" data-show="werkstatt">
+          <div class="ctl-head"><label for="c-load">Last (Bremse an der Achse)</label><output id="o-c-load"></output></div>
+          <input type="range" id="c-load" min="0" max="100" step="5" value="0">
+        </div>
+        <label class="check"><input type="checkbox" id="c-slow">Zeitlupe</label>
+        <label class="check"><input type="checkbox" id="c-forces" checked>Kraftpfeile anzeigen</label>
+        <div class="btn-row">
+          <button class="btn primary" id="c-on" type="button">Schalter öffnen (Strom aus)</button>
+          <button class="btn" id="c-dead" type="button" data-show="kommutator werkstatt">Auf Totpunkt stellen</button>
+        </div>
+        <dl class="readouts">
+          <dt>Kraft je Leiterseite</dt><dd id="ro-f"></dd>
+          <dt>Drehzahl</dt><dd id="ro-n"></dd>
+          <dt>Drehrichtung</dt><dd id="ro-dir"></dd>
+          <dt data-show="schleife">Umdrehungen am Stück</dt><dd id="ro-run" data-show="schleife"></dd>
+          <dt data-show="schleife">Dein Rekord</dt><dd id="ro-best" data-show="schleife"></dd>
+          <dt data-show="werkstatt">Zustand</dt><dd id="ro-state" data-show="werkstatt"></dd>
+        </dl>
+        <div class="formula" id="formula">F = I · l · B</div>
+        <p class="hint" id="mode-hint"></p>
+      </div>
+
+      <!-- Übung -->
+      <div class="card" id="quiz-panel" hidden>
+        <div class="ctl">
+          <span class="ctl-head">Schwierigkeit</span>
+          <div class="seg" role="radiogroup" aria-label="Schwierigkeit">
+            <input type="radio" name="q-level" id="q-level-1" value="1" checked><label for="q-level-1">Stufe 1</label>
+            <input type="radio" name="q-level" id="q-level-2" value="2"><label for="q-level-2">Stufe 2</label>
+          </div>
+          <span class="hint" id="q-level-hint">Die Schleife steht immer waagerecht.</span>
+        </div>
+        <h2>Aufgabe <span id="q-num"></span></h2>
+        <p class="quiz-task" id="q-task"></p>
+        <div class="answers" id="q-answers">
+          <button data-ans="ccw" type="button"><span class="sym">↺</span><small>gegen den Uhrzeigersinn</small></button>
+          <button data-ans="none" type="button"><span class="sym">0</span><small>keine Drehung</small></button>
+          <button data-ans="cw" type="button"><span class="sym">↻</span><small>im Uhrzeigersinn</small></button>
+        </div>
+        <p class="feedback" id="q-feedback" aria-live="polite"></p>
+        <div class="btn-row"><button class="btn primary" id="q-next" type="button">Nächste Aufgabe</button></div>
+        <dl class="readouts"><dt>Richtig</dt><dd id="ro-q-score">0 / 0</dd><dt>Serie</dt><dd id="ro-q-streak">0</dd></dl>
+      </div>
+
+      <!-- 3D-Hand -->
+      <div class="card">
+        <div class="hand-top">
+          <span class="hand-name">Rechte Hand</span>
+          <button class="btn" id="hand-reset" type="button" title="Blickrichtung zurücksetzen">Ansicht</button>
+        </div>
+        <canvas id="hand" aria-label="3D-Darstellung der Drei-Finger-Regel für Leiterseite 1, mit der Maus oder dem Finger drehbar"></canvas>
+        <ul class="fingers" id="hand-fingers"></ul>
+        <p class="hint">Die Hand zeigt die Regel für Leiterseite 1. Ziehen dreht die Hand. Die graue Fläche ist die Bildebene beim Blick entlang der Achse.</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="card task-foot">
+    <div class="sol-gate">
+      <button class="btn" id="sol-toggle" type="button">Lösungen einblenden (für Lehrkräfte)</button>
+      <span class="sol-code" id="sol-code" hidden>
+        <label for="sol-input">Code</label>
+        <input type="password" id="sol-input" autocomplete="off" autocapitalize="characters" spellcheck="false" size="12">
+        <button class="btn primary" id="sol-ok" type="button">Öffnen</button>
+      </span>
+      <span class="hint" id="sol-msg" aria-live="polite"></span>
+    </div>
+    <span class="hint">Antworten werden nur in diesem Browser gespeichert.</span>
+    <button class="btn" id="clear-answers" type="button">Alle Antworten löschen</button>
+  </div>
+  <div class="explain">
+    <div class="card">
+      <h3>Die Bauteile des Gleichstrommotors</h3>
+      <p>Der <b>Feldmagnet</b> steht fest und liefert das Magnetfeld. Dazwischen dreht sich der <b>Anker</b> mit der Spule. Der <b>Kommutator</b> sitzt auf der Achse und dreht sich mit. Die <b>Bürsten</b> (Schleifkontakte) stehen fest und leiten den Strom zum Kommutator.</p>
+    </div>
+    <div class="card">
+      <h3>Warum dreht sich die Schleife?</h3>
+      <p>In den beiden Leiterseiten fließt der Strom in entgegengesetzte Richtungen. Nach der Drei-Finger-Regel wirken deshalb zwei entgegengesetzte Kräfte: eine Seite wird nach oben gedrückt, die andere nach unten. Dieses Kräftepaar dreht die Schleife.</p>
+    </div>
+    <div class="card">
+      <h3>Totpunkt und Kommutator</h3>
+      <p>Steht die Schleife quer zum Feld, ziehen die Kräfte nur noch nach außen. Das ist der Totpunkt. Genau hier polt der Kommutator den Strom in der Schleife um. Danach drehen die Kräfte die Schleife in dieselbe Richtung weiter.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const TAU = Math.PI * 2, PI = Math.PI;
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const fmt = (x, d) => x.toFixed(d).replace(".", ",");
+
+/* ---------- Farben aus den CSS-Tokens ---------- */
+let C = {};
+function refreshColors() {
+  const cs = getComputedStyle(document.documentElement);
+  const g = (n) => cs.getPropertyValue(n).trim();
+  C = {
+    stage: g("--stage"), surface: g("--surface"), ink: g("--ink"), muted: g("--muted"), line: g("--line"),
+    v: g("--c-v"), B: g("--c-b"), F: g("--c-f"), h1: g("--h1"), h2: g("--h2"),
+    north: g("--north"), south: g("--south"), skin: g("--skin"), skinEdge: g("--skin-edge"),
+    metal: g("--metal"), mono: g("--font-mono"), body: g("--font-body"), display: g("--font-display"),
+  };
+}
+refreshColors();
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refreshColors); } catch (e) {}
+new MutationObserver(refreshColors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "class", "style"] });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshColors);
+
+/* ---------- Canvas-Helfer ---------- */
+function fit(cv) {
+  const r = cv.getBoundingClientRect();
+  const d = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * d)), h = Math.max(1, Math.round(r.height * d));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d");
+  ctx.setTransform(d, 0, 0, d, 0, 0);
+  return { ctx, w: r.width, h: r.height };
+}
+function withAlpha(col, a) {
+  if (col && col[0] === "#" && col.length === 7) {
+    const n = parseInt(col.slice(1), 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+  return col;
+}
+function arrow(ctx, x1, y1, x2, y2, col, w = 3, head = 11) {
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  if (len < 2) return;
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  head = Math.min(head, len * 0.6);
+  ctx.save();
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = w; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - Math.cos(a) * head * 0.7, y2 - Math.sin(a) * head * 0.7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - Math.cos(a - 0.42) * head, y2 - Math.sin(a - 0.42) * head);
+  ctx.lineTo(x2 - Math.cos(a + 0.42) * head, y2 - Math.sin(a + 0.42) * head);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function dirSym(ctx, x, y, r, dir, col, lw = 1.6) {
+  ctx.save();
+  ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw;
+  if (dir === "out") { ctx.beginPath(); ctx.arc(x, y, Math.max(1.6, r * 0.3), 0, TAU); ctx.fill(); }
+  else { const k = r * 0.55; ctx.beginPath(); ctx.moveTo(x - k, y - k); ctx.lineTo(x + k, y + k); ctx.moveTo(x + k, y - k); ctx.lineTo(x - k, y + k); ctx.stroke(); }
+  ctx.restore();
+}
+function text(ctx, s, x, y, col, size = 13, align = "left", weight = 500, font) {
+  ctx.save();
+  ctx.fillStyle = col; ctx.font = `${weight} ${size}px ${font || C.body}`; ctx.textAlign = align; ctx.textBaseline = "middle";
+  ctx.fillText(s, x, y);
+  ctx.restore();
+}
+function pill(ctx, s, x, y, col, size = 12) {
+  ctx.save();
+  ctx.font = `500 ${size}px ${C.mono}`;
+  const w = ctx.measureText(s).width + 14, h = size + 10;
+  ctx.fillStyle = withAlpha(C.surface, 0.9);
+  ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y - h / 2, w, h, 6) : ctx.rect(x, y - h / 2, w, h); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = col; ctx.textBaseline = "middle"; ctx.fillText(s, x + 7, y + 1);
+  ctx.restore();
+  return w;
+}
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const scale = (a, k) => a.map((x) => x * k);
+
+/* ================= Motormodell =================
+   Koordinaten: x nach rechts, y nach oben, z zum Betrachter (Drehachse).
+   Feld: B = b·x̂ (b = +1: N links). Spule k steht unter dem Winkel φ + k·π/n,
+   Leiterseite 1 bei +R·(cos, sin), Leiterseite 2 gegenüber.
+   cur[k] = Stromrichtung in Leiterseite 1 der Spule k längs z (+1 = zum Betrachter, 0 = stromlos). */
+const S = { I: 2, B: 100, b: 1, s0: 1, on: true, slow: false, forces: true, view: "3d", coils: 1, N: 1, load: 0 };
+const M = { phi: 0.35, om: 0, held: false, t: 0, flow: 0, nAvg: 0, run: 0, best: 0 };
+const KK = 55.5, CL = 1.6, CQ = 0.716, DEAD = 0.14, LEN = 0.05;
+let mode = "schleife";
+function cfg() {
+  const w = mode === "werkstatt";
+  return { comm: mode !== "schleife", coils: w ? S.coils : 1, N: w ? S.N : 1, load: w ? S.load : 0 };
+}
+function currents(phi, c, st) {
+  const out = [];
+  if (!st.on) { for (let k = 0; k < c.coils; k++) out.push(0); return out; }
+  if (!c.comm) return [-st.s0];
+  let best = 0, bv = -1;
+  for (let k = 0; k < c.coils; k++) { const v = Math.abs(Math.cos(phi + k * PI / c.coils)); if (v > bv) { bv = v; best = k; } }
+  for (let k = 0; k < c.coils; k++) {
+    const cs = Math.cos(phi + k * PI / c.coils);
+    out.push(k !== best ? 0 : (c.coils === 1 && Math.abs(cs) < DEAD) ? 0 : -st.s0 * Math.sign(cs));
+  }
+  return out;
+}
+function tauN(phi, c, st) {
+  const cu = currents(phi, c, st); let s = 0;
+  for (let k = 0; k < c.coils; k++) s += cu[k] * st.b * Math.cos(phi + k * PI / c.coils);
+  return s;
+}
+function forceN() { return cfg().N * S.I * LEN * (S.B / 1000); }
+function step(dt) {
+  if (S.slow) dt *= 0.15;
+  M.t += dt;
+  if (S.on) M.flow += dt * 0.32 * S.I;
+  if (M.held) { M.om = 0; M.run = 0; return; }
+  const c = cfg();
+  const A = (S.I / 2) * (S.B / 100) * c.N, fr = KK * (c.load / 100) * 3;
+  const n = 8, h = dt / n;
+  for (let i = 0; i < n; i++) {
+    const drive = KK * A * tauN(M.phi, c, S);
+    if (fr > 0 && Math.abs(M.om) < 0.15 && Math.abs(drive) <= fr) { M.om = 0; continue; }
+    const sg = M.om !== 0 ? Math.sign(M.om) : Math.sign(drive);
+    const o2 = M.om + (drive - fr * sg - CL * M.om - CQ * M.om * Math.abs(M.om)) * h;
+    M.om = (fr > 0 && M.om !== 0 && o2 * M.om < 0 && Math.abs(drive) <= fr) ? 0 : o2;
+    const d = M.om * h;
+    M.phi += d;
+    if (d !== 0) { if (M.run !== 0 && Math.sign(d) !== Math.sign(M.run)) M.run = 0; M.run += d; }
+  }
+  if (Math.abs(M.om) < 0.02 && Math.abs(M.run) < TAU) M.run = 0;
+  M.best = Math.max(M.best, Math.floor(Math.abs(M.run) / TAU));
+  M.nAvg += (Math.abs(M.om) - M.nAvg) * Math.min(1, dt / (S.slow ? 0.09 : 0.6));
+}
+function angleDeg(phi) { let d = Math.abs(((phi * 180 / PI) % 180 + 180) % 180); if (d > 90) d = 180 - d; return d; }
+
+/* ================= Zeichnung des Motors =================
+   Eine einzige 3D-Szene. cam = 1: Schrägbild, cam = 0: Blick genau entlang der Achse. */
+const R = 0.55, ZF = 0.42, ZB = -0.42, RC = 0.16;
+let cam = 1;
+function mkView(w, h, t) {
+  const yaw = -0.32 * t, pitch = 0.36 * t, persp = 0.1 * t;
+  const s = Math.min(w / (3.3 + 0.4 * t), h / (2.6 + 0.15 * t));
+  const cx = w * 0.5 + s * 0.1 * t, cy = h * (0.44 - 0.01 * t);
+  const cY = Math.cos(yaw), sY = Math.sin(yaw), cP = Math.cos(pitch), sP = Math.sin(pitch);
+  const rot = (p) => { const x1 = p[0] * cY + p[2] * sY, z1 = -p[0] * sY + p[2] * cY; return [x1, p[1] * cP - z1 * sP, p[1] * sP + z1 * cP]; };
+  const P = (p) => { const r = rot(p), k = 1 / (1 - r[2] * persp); return { x: cx + r[0] * s * k, y: cy - r[1] * s * k, z: r[2] }; };
+  return { s, rot, P, cx, cy };
+}
+function loopPts(a, rings) {
+  const u0 = Math.cos(a), u1 = Math.sin(a);
+  const rA = rings ? 0.2 : RC, zA = rings ? 0.6 : 0.66, rB = rings ? 0.13 : RC, zB = rings ? 0.8 : 0.66;
+  return [[rA * u0, rA * u1, zA], [R * u0, R * u1, ZF], [R * u0, R * u1, ZB], [-R * u0, -R * u1, ZB], [-R * u0, -R * u1, ZF], [-rB * u0, -rB * u1, zB]];
+}
+function drawMotor(ctx, w, h, sc) {
+  const V = mkView(w, h, sc.cam), P = V.P, s = V.s;
+  const rings = sc.contact === "rings", hasSrc = sc.contact !== "none";
+  const poly = (pts, fill, stroke) => { ctx.beginPath(); pts.forEach((v, i) => { const q = P(v); i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y); }); ctx.closePath(); if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); } };
+  const line3 = (a, b, col, lw) => { const p = P(a), q = P(b); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y); ctx.stroke(); };
+  const box = (x0, x1, y0, y1, z0, z1, col) => {
+    const F = [
+      { n: [-1, 0, 0], p: [[x0, y0, z0], [x0, y1, z0], [x0, y1, z1], [x0, y0, z1]], sh: -0.14 },
+      { n: [1, 0, 0], p: [[x1, y0, z0], [x1, y1, z0], [x1, y1, z1], [x1, y0, z1]], sh: -0.14 },
+      { n: [0, 1, 0], p: [[x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]], sh: 0.22 },
+      { n: [0, -1, 0], p: [[x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]], sh: -0.3 },
+      { n: [0, 0, 1], p: [[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], sh: 0 },
+    ];
+    for (const f of F) {
+      if (V.rot(f.n)[2] <= 0.001) continue;
+      poly(f.p, col);
+      if (f.sh) poly(f.p, f.sh > 0 ? `rgba(255,255,255,${f.sh})` : `rgba(0,0,0,${-f.sh})`);
+      poly(f.p, null, "rgba(0,0,0,0.25)");
+    }
+  };
+  const nLeft = sc.b > 0;
+  const pole = (left) => {
+    const isN = left === nLeft;
+    const x0 = left ? -1.42 : 0.9, x1 = left ? -0.9 : 1.42;
+    box(x0, x1, -0.45, 0.45, -0.42, 0.42, isN ? C.north : C.south);
+    const c = P([(x0 + x1) / 2, 0, 0.42]);
+    text(ctx, isN ? "N" : "S", c.x, c.y + 1, "#ffffff", Math.max(16, s * 0.26), "center", 700, C.display);
+  };
+
+  // 1) hinterer Pol, Feldlinien
+  pole(true);
+  for (const fy of [-0.3, -0.1, 0.1, 0.3]) for (const fz of [-0.25, 0.25]) {
+    line3([-0.9, fy, fz], [0.9, fy, fz], withAlpha(C.B, 0.42), 1.3);
+    for (const ax of [-0.72, 0.72]) { const p = P([ax - 0.07 * sc.b, fy, fz]), q = P([ax + 0.07 * sc.b, fy, fz]); arrow(ctx, p.x, p.y, q.x, q.y, withAlpha(C.B, 0.85), 1.3, 7); }
+  }
+  { const p = P([0.74, 0.44, 0.25]); text(ctx, "B", p.x, p.y - 4, C.B, 15, "center", 700, C.mono); }
+
+  // 2) Achse und Spulen
+  line3([0, 0, -0.62], [0, 0, 1.02], C.metal, 3);
+  const segs = [], coilPts = [];
+  for (let k = 0; k < sc.coils; k++) {
+    const a = sc.phi + k * PI / sc.coils, p = loopPts(a, rings);
+    coilPts.push(p);
+    const mid = [0, 0, ZB];
+    const live = sc.cur[k] !== 0 || sc.coils === 1;
+    const c1 = live ? C.h1 : C.metal, c2 = live ? C.h2 : C.metal;
+    const add = (A, B, col) => segs.push({ A, B, col, z: (V.rot(A)[2] + V.rot(B)[2]) / 2 });
+    add(p[0], p[1], c1); add(p[1], p[2], c1); add(p[2], mid, c1); add(mid, p[3], c2); add(p[3], p[4], c2); add(p[4], p[5], c2);
+  }
+  segs.sort((a, b) => a.z - b.z);
+  const lw = 3.6 + 1.6 * (sc.N - 1);
+  for (const g of segs) { line3(g.A, g.B, withAlpha(C.ink, 0.55), lw + 2); line3(g.A, g.B, g.col, lw); }
+
+  // 3) vorderer Pol
+  pole(false);
+
+  // 4) Schleifringe oder Kommutator, Bürsten, Zuleitungen, Stromquelle
+  const cyl = (rc, z0, z1, parts) => {
+    for (const pt of parts) {
+      const nst = Math.max(2, Math.ceil((pt.a1 - pt.a0) / 0.2)), da = (pt.a1 - pt.a0) / nst;
+      for (let i = 0; i < nst; i++) {
+        const a = pt.a0 + i * da, b = a + da, am = a + da / 2;
+        const A = [rc * Math.cos(a), rc * Math.sin(a)], B = [rc * Math.cos(b), rc * Math.sin(b)];
+        if (V.rot([Math.cos(am), Math.sin(am), 0])[2] > 0.001) { const q = [[A[0], A[1], z0], [B[0], B[1], z0], [B[0], B[1], z1], [A[0], A[1], z1]]; poly(q, pt.col, pt.col); poly(q, "rgba(0,0,0,0.18)"); }
+      }
+    }
+    for (const pt of parts) {
+      const nst = Math.max(2, Math.ceil((pt.a1 - pt.a0) / 0.2)), cap = [[0, 0, z1]];
+      for (let i = 0; i <= nst; i++) { const a = pt.a0 + (pt.a1 - pt.a0) * i / nst; cap.push([rc * Math.cos(a), rc * Math.sin(a), z1]); }
+      poly(cap, pt.col, parts.length > 1 ? null : pt.col);
+    }
+    if (parts.length > 1) for (const pt of parts) line3([0, 0, z1], [rc * Math.cos(pt.a0), rc * Math.sin(pt.a0), z1], C.stage, 2.2);
+    const c = P([0, 0, z1]); ctx.fillStyle = C.metal; ctx.beginPath(); ctx.arc(c.x, c.y, Math.max(2.5, s * 0.035), 0, TAU); ctx.fill();
+  };
+  const GR = "#3b414b";
+  let zR = 0.78, zL = 0.78, xoR = RC + 0.18, xoL = -(RC + 0.18);
+  if (hasSrc) {
+    if (rings) {
+      zR = 0.66; zL = 0.86; xoR = 0.38; xoL = -0.31;
+      cyl(0.2, 0.6, 0.72, [{ a0: 0, a1: TAU, col: C.h1 }]);
+      box(0.2, xoR, -0.055, 0.055, 0.62, 0.70, GR);
+      cyl(0.13, 0.8, 0.92, [{ a0: 0, a1: TAU, col: C.h2 }]);
+      box(xoL, -0.13, -0.055, 0.055, 0.82, 0.90, GR);
+    } else {
+      box(xoL, -RC, -0.055, 0.055, 0.72, 0.84, GR);
+      const parts = [], wd = PI / sc.coils;
+      for (let k = 0; k < sc.coils; k++) {
+        const a = sc.phi + k * PI / sc.coils;
+        parts.push({ a0: a - wd / 2, a1: a + wd / 2, col: C.h1 }, { a0: a + PI - wd / 2, a1: a + PI + wd / 2, col: C.h2 });
+      }
+      cyl(RC, 0.66, 0.9, parts);
+      box(RC, xoR, -0.055, 0.055, 0.72, 0.84, GR);
+    }
+  }
+  const wireR = [[xoR, 0, zR], [0.58, 0, zR], [0.58, -0.62, zR], [0.2, -0.62, 0.8], [0.2, -0.8, 0.8]];
+  const wireL = [[xoL, 0, zL], [-0.58, 0, zL], [-0.58, -0.62, zL], [-0.2, -0.62, 0.8], [-0.2, -0.8, 0.8]];
+  if (hasSrc) {
+    for (const wr of [wireL, wireR]) for (let i = 0; i < wr.length - 1; i++) line3(wr[i], wr[i + 1], withAlpha(C.ink, 0.75), 2);
+    box(-0.34, 0.34, -1.02, -0.8, 0.62, 0.98, C.metal);
+    poly([[-0.24, -0.97, 0.98], [0.24, -0.97, 0.98], [0.24, -0.85, 0.98], [-0.24, -0.85, 0.98]], "#14202b");
+    const d = P([0, -0.91, 0.98]);
+    text(ctx, sc.on ? fmt(sc.I, 1) + " A" : "aus", d.x, d.y + 1, "#7dffb0", Math.max(10, s * 0.085), "center", 500, C.mono);
+    for (const right of [true, false]) {
+      const plus = right === (sc.s0 > 0), tp = P([right ? 0.2 : -0.2, -0.8, 0.8]);
+      ctx.fillStyle = plus ? "#d23a3a" : "#1b1f26"; ctx.beginPath(); ctx.arc(tp.x, tp.y, 5.5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.5; ctx.stroke();
+      const lp = P([right ? 0.72 : -0.72, -0.68, right ? zR : zL]);
+      text(ctx, plus ? "+" : "−", lp.x, lp.y, plus ? C.north : C.ink, 19, "center", 700);
+    }
+    const sl = P([0, -1.02, 0.98]);
+    text(ctx, "Stromquelle", sl.x, sl.y + 13, C.muted, 12, "center", 500);
+  }
+
+  // 5) Strommarken entlang des Stromkreises (technische Stromrichtung)
+  const act = sc.cur.findIndex((c) => c !== 0);
+  if (hasSrc && sc.on && act >= 0) {
+    const cp = coilPts[act].slice(); if (sc.cur[act] > 0) cp.reverse();
+    const plusW = sc.s0 > 0 ? wireR : wireL, minusW = sc.s0 > 0 ? wireL : wireR;
+    const path = plusW.slice().reverse().concat(cp, minusW);
+    let u = sc.flow % 0.42;
+    for (let i = 0; i < path.length - 1; i++) {
+      const A = path[i], B = path[i + 1], l = Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]);
+      if (l < 1e-6) continue;
+      const pa = P(A), pb = P(B), pl = Math.hypot(pb.x - pa.x, pb.y - pa.y);
+      for (; u < l; u += 0.42) {
+        if (pl < 8) continue;
+        const f = u / l, x = pa.x + (pb.x - pa.x) * f, y = pa.y + (pb.y - pa.y) * f, ux = (pb.x - pa.x) / pl, uy = (pb.y - pa.y) / pl;
+        arrow(ctx, x - ux * 7, y - uy * 7, x + ux * 7, y + uy * 7, C.v, 2.6, 8);
+      }
+      u -= l;
+    }
+  }
+
+  // 6) Leiterquerschnitte mit ⊗ / ⊙ (nur beim Blick entlang der Achse), Nummern, Kräfte
+  const flat = 1 - sc.cam;
+  for (let k = 0; k < sc.coils; k++) {
+    const a = sc.phi + k * PI / sc.coils, u = [Math.cos(a), Math.sin(a)];
+    for (const side of [1, -1]) {
+      const cz = sc.cur[k] * side, pos = [R * u[0] * side, R * u[1] * side, 0];
+      const col = (sc.cur[k] !== 0 || sc.coils === 1) ? (side > 0 ? C.h1 : C.h2) : C.metal;
+      const pf = P([pos[0], pos[1], ZF]);
+      if (flat > 0.02) {
+        ctx.save(); ctx.globalAlpha = flat;
+        const rr = Math.max(10, s * 0.085);
+        ctx.fillStyle = C.surface; ctx.strokeStyle = col; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(pf.x, pf.y, rr, 0, TAU); ctx.fill(); ctx.stroke();
+        if (cz !== 0) dirSym(ctx, pf.x, pf.y, rr, cz > 0 ? "out" : "in", C.v, 2.4);
+        ctx.restore();
+      }
+      if (k === 0) {
+        const lp = P([(R + 0.21) * u[0] * side, (R + 0.21) * u[1] * side, 0.42 * flat]);
+        ctx.fillStyle = col; ctx.beginPath(); ctx.arc(lp.x, lp.y, 9, 0, TAU); ctx.fill();
+        text(ctx, side > 0 ? "1" : "2", lp.x, lp.y + 0.5, "#ffffff", 12, "center", 700, C.mono);
+      }
+      if (sc.forces && cz !== 0) {
+        const fy = cz * sc.b, len = 0.26 + 0.42 * Math.sqrt(Math.min(1, sc.F / 0.09));
+        const base = [pos[0], pos[1], ZF * flat];
+        const p0 = P([base[0], base[1] + fy * 0.1 * flat, base[2]]), p1 = P([base[0], base[1] + fy * len, base[2]]), p2 = P([base[0], base[1] + fy * (len + 0.11), base[2]]);
+        arrow(ctx, p0.x, p0.y, p1.x, p1.y, C.F, 3.4, 12);
+        text(ctx, "F", p2.x, p2.y, C.F, 15, "center", 700, C.mono);
+      }
+    }
+  }
+
+  // 7) Drehrichtungspfeil
+  if (Math.abs(sc.om || 0) > 0.4) {
+    const dir = Math.sign(sc.om), a0 = PI / 2 - dir * 0.42, pts = [];
+    for (let i = 0; i <= 10; i++) { const a = a0 + dir * 0.84 * i / 10; pts.push(P([1.0 * Math.cos(a) * 0.8, 0.8 * Math.sin(a) + 0.06, 0.42 * flat])); }
+    ctx.strokeStyle = C.muted; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+    ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke();
+    const e = pts[10], f = pts[8];
+    arrow(ctx, f.x, f.y, e.x + (e.x - f.x) * 0.6, e.y + (e.y - f.y) * 0.6, C.muted, 2.2, 10);
+  }
+  return V;
+}
+function drawGraph(ctx, w, c) {
+  const gw = Math.min(196, w * 0.42), gh = 70, x0 = w - gw - 12, y0 = 10;
+  ctx.save();
+  ctx.fillStyle = withAlpha(C.surface, 0.92); ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, gw, gh, 6) : ctx.rect(x0, y0, gw, gh); ctx.fill(); ctx.stroke();
+  text(ctx, gw > 185 ? "Drehwirkung bei einer Umdrehung" : "Drehwirkung", x0 + 8, y0 + 11, C.muted, 10.5, "left", 500);
+  const px0 = x0 + 20, px1 = x0 + gw - 8, mid = y0 + 43, amp = 19;
+  text(ctx, "↺", x0 + 10, mid - 11, C.muted, 11, "center"); text(ctx, "↻", x0 + 10, mid + 12, C.muted, 11, "center");
+  ctx.strokeStyle = C.line; ctx.beginPath(); ctx.moveTo(px0, mid + 0.5); ctx.lineTo(px1, mid + 0.5); ctx.stroke();
+  const st = { on: true, s0: S.s0, b: S.b };
+  ctx.beginPath(); ctx.moveTo(px0, mid);
+  for (let i = 0; i <= 120; i++) ctx.lineTo(px0 + (px1 - px0) * i / 120, mid - amp * tauN(i / 120 * TAU, c, st));
+  ctx.lineTo(px1, mid); ctx.closePath();
+  ctx.fillStyle = withAlpha(C.F, 0.16); ctx.fill();
+  ctx.beginPath();
+  for (let i = 0; i <= 120; i++) { const y = mid - amp * tauN(i / 120 * TAU, c, st), x = px0 + (px1 - px0) * i / 120; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.strokeStyle = C.F; ctx.lineWidth = 1.8; ctx.lineJoin = "round"; ctx.stroke();
+  const pn = ((M.phi % TAU) + TAU) % TAU, mx = px0 + (px1 - px0) * pn / TAU, my = mid - amp * tauN(pn, c, S);
+  ctx.strokeStyle = withAlpha(C.ink, 0.35); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(mx, mid - amp - 3); ctx.lineTo(mx, mid + amp + 3); ctx.stroke();
+  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(mx, my, 3.6, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+let lastView = null;
+function simDraw(ctx, w, h) {
+  const c = cfg(), cur = currents(M.phi, c, S);
+  lastView = drawMotor(ctx, w, h, {
+    phi: M.phi, cur, b: S.b, s0: S.s0, on: S.on, I: S.I, coils: c.coils, N: c.N, cam,
+    contact: c.comm ? "comm" : "rings", forces: S.forces, F: forceN(), om: M.om, flow: M.flow,
+  });
+  pill(ctx, cam > 0.5 ? "Schrägbild" : "Blick entlang der Achse", 12, 22, C.ink);
+  const single = c.coils === 1, dead = Math.abs(Math.cos(M.phi)) < DEAD;
+  if (S.on && single && dead && (c.comm || Math.abs(M.om) < 0.6))
+    pill(ctx, c.comm ? "Totpunkt: Bürsten auf dem Spalt, kein Strom" : "Totpunkt: Kräfte drehen nicht mehr", 12, 50, C.F);
+  if (mode === "schleife" && Math.abs(M.run) >= TAU) pill(ctx, `${Math.floor(Math.abs(M.run) / TAU)} Umdrehungen am Stück`, 12, 50, C.B);
+  drawGraph(ctx, w, c);
+}
+function simHand() {
+  const cz = currents(M.phi, cfg(), S)[0];
+  return { thumb: cz ? [0, 0, cz] : null, index: [S.b, 0, 0], middle: cz ? [0, cz * S.b, 0] : null };
+}
+function simReadouts() {
+  const c = cfg(), F = forceN(), rpm = M.nAvg / TAU * 60;
+  const moving = Math.abs(M.om) > 0.25;
+  $("#ro-f").textContent = S.on ? fmt(F * 1000, 1) + " mN" : "0 mN (Strom aus)";
+  $("#ro-n").textContent = fmt(rpm < 0.5 ? 0 : rpm, 0) + " U/min";
+  $("#ro-dir").textContent = !moving ? "steht" : M.om > 0 ? "↺ gegen Uhrzeigersinn" : "↻ im Uhrzeigersinn";
+  $("#ro-run").textContent = String(Math.floor(Math.abs(M.run) / TAU));
+  $("#ro-best").textContent = String(M.best);
+  const dead = c.coils === 1 && Math.abs(Math.cos(M.phi)) < DEAD;
+  $("#ro-state").textContent = !S.on ? "Strom aus" : moving ? "läuft" : dead ? "hängt im Totpunkt" : c.load > 0 ? "Last zu groß" : "steht";
+  const ph = $("#c-phi");
+  if (document.activeElement !== ph || !M.held) ph.value = String(Math.round((((M.phi * 180 / PI) % 360) + 360) % 360));
+  $("#o-c-phi").textContent = fmt(angleDeg(M.phi), 0) + "° zum Feld";
+  $("#stage-bar").innerHTML = `<span>I = <b>${S.on ? fmt(S.I, 1) : "0,0"} A</b></span><span>B = <b>${fmt(S.B, 0)} mT</b></span><span>F je Leiterseite = <b>${S.on ? fmt(F * 1000, 1) : "0,0"} mN</b></span><span>Drehzahl = <b>${fmt(rpm < 0.5 ? 0 : rpm, 0)} U/min</b></span><span>Stellung = <b>${fmt(angleDeg(M.phi), 0)}°</b></span>${S.slow ? "<span>Zeitlupe</span>" : ""}`;
+}
+
+/* ================= Übung ================= */
+const Q = { level: 1, s: null, answered: false, chosen: null, right: 0, total: 0, streak: 0, n: 0 };
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const ANS = { cw: "im Uhrzeigersinn", ccw: "gegen den Uhrzeigersinn", none: "keine Drehung" };
+function qSolve(s) { const t = s.cz * s.b * Math.cos(s.phi); return Math.abs(t) < 1e-6 ? "none" : t > 0 ? "ccw" : "cw"; }
+function qNew() {
+  const L1 = [0, PI], L2 = [0, PI, PI / 6, -PI / 6, 5 * PI / 6, 7 * PI / 6, PI / 3, 2 * PI / 3, -PI / 3, 4 * PI / 3, PI / 2, -PI / 2, PI / 2, -PI / 2];
+  let s;
+  do { s = { phi: pick(Q.level === 1 ? L1 : L2), b: pick([1, -1]), cz: pick([1, -1]) }; }
+  while (Q.s && s.phi === Q.s.phi && s.b === Q.s.b && s.cz === Q.s.cz);
+  Q.s = s; Q.answered = false; Q.chosen = null; Q.n++;
+  $("#q-num").textContent = String(Q.n);
+  $("#q-task").innerHTML = `Der Nordpol ist <b>${s.b > 0 ? "links" : "rechts"}</b>. In Leiterseite 1 fließt der Strom <b>${s.cz > 0 ? "⊙ aus der Zeichenebene heraus" : "⊗ in die Zeichenebene hinein"}</b>, in Leiterseite 2 entgegengesetzt. In welche Richtung dreht sich die Schleife?`;
+  $("#q-feedback").textContent = ""; $("#q-feedback").className = "feedback";
+  $$("#q-answers button").forEach((b) => { b.disabled = false; b.className = ""; });
+}
+function qAnswer(ans) {
+  if (Q.answered) return;
+  const s = Q.s, sol = qSolve(s), ok = ans === sol;
+  Q.answered = true; Q.chosen = ans; Q.total++;
+  if (ok) { Q.right++; Q.streak++; } else Q.streak = 0;
+  $$("#q-answers button").forEach((b) => { b.disabled = true; if (b.dataset.ans === sol) b.classList.add("right"); else if (b.dataset.ans === ans) b.classList.add("wrong"); });
+  const cs = Math.cos(s.phi), sn = Math.sin(s.phi);
+  const where = Math.abs(cs) > 0.5 ? (cs > 0 ? "rechts" : "links") : (sn > 0 ? "oben" : "unten");
+  const fdir = s.cz * s.b > 0 ? "nach oben" : "nach unten";
+  let why = `Leiterseite 1 (${where}): Daumen ${s.cz > 0 ? "aus der Ebene heraus" : "in die Ebene hinein"}, Zeigefinger ${s.b > 0 ? "nach rechts" : "nach links"} (von N nach S), der Mittelfinger zeigt ${fdir}. Auf Leiterseite 2 wirkt die Gegenkraft. `;
+  why += sol === "none" ? "Die Schleife steht senkrecht: Die Kräfte ziehen oder drücken nur, sie drehen nicht. Das ist der Totpunkt." : `Das Kräftepaar dreht die Schleife ${ANS[sol]}.`;
+  const fb = $("#q-feedback");
+  fb.className = "feedback " + (ok ? "ok" : "no");
+  fb.innerHTML = `<strong>${ok ? "Richtig." : "Noch nicht."}</strong> ${why}`;
+}
+function qDraw(ctx, w, h) {
+  const s = Q.s; if (!s) return;
+  drawMotor(ctx, w, h, { phi: s.phi, cur: [s.cz], b: s.b, s0: 1, on: true, I: 2, coils: 1, N: 1, cam: 0, contact: "none", forces: Q.answered, F: 0.02, om: Q.answered ? (qSolve(s) === "ccw" ? 1 : qSolve(s) === "cw" ? -1 : 0) : 0, flow: 0 });
+  pill(ctx, "Blick entlang der Achse", 12, 22, C.ink);
+  if (!Q.answered) pill(ctx, "Drehrichtung = ?", 12, 50, C.F);
+}
+function qHand() { const s = Q.s; return { thumb: [0, 0, s.cz], index: [s.b, 0, 0], middle: [0, s.cz * s.b, 0], hideMiddle: !Q.answered }; }
+function qReadouts() {
+  $("#ro-q-score").textContent = `${Q.right} / ${Q.total}`;
+  $("#ro-q-streak").textContent = String(Q.streak);
+  $("#stage-bar").innerHTML = `<span>Richtig: <b>${Q.right} von ${Q.total}</b></span><span>Serie: <b>${Q.streak}</b></span><span>Tipp: Erst die Kraft auf Leiterseite 1 bestimmen, dann die Drehung überlegen.</span>`;
+}
+
+/* ================= 3D-Hand ================= */
+const HV = { yaw: -0.55, pitch: 0.38, drag: null };
+const handCv = $("#hand");
+function proj(p, cx, cy, s) {
+  const cY = Math.cos(HV.yaw), sY = Math.sin(HV.yaw), cP = Math.cos(HV.pitch), sP = Math.sin(HV.pitch);
+  const x1 = p[0] * cY + p[2] * sY, z1 = -p[0] * sY + p[2] * cY;
+  const y2 = p[1] * cP - z1 * sP, z2 = p[1] * sP + z1 * cP;
+  const k = 1 / (1 - z2 * 0.16);
+  return { x: cx + x1 * s * k, y: cy - y2 * s * k, z: z2, k };
+}
+let lastHandKey = "";
+function dirName(v) {
+  if (!v) return "–";
+  if (v[2] > 0.5) return "aus der Zeichenebene heraus"; if (v[2] < -0.5) return "in die Zeichenebene hinein";
+  if (v[0] > 0.5) return "nach rechts"; if (v[0] < -0.5) return "nach links";
+  return v[1] > 0 ? "nach oben" : "nach unten";
+}
+function drawHand(hs) {
+  const { ctx, w, h } = fit(handCv);
+  ctx.clearRect(0, 0, w, h);
+  const cx = w / 2, cy = h / 2 + 6, s = Math.min(w, h) * 0.36;
+  const corners = [[-1.25, -1.0, 0], [1.25, -1.0, 0], [1.25, 1.0, 0], [-1.25, 1.0, 0]].map((p) => proj(p, cx, cy, s));
+  ctx.fillStyle = withAlpha(C.muted, 0.1); ctx.strokeStyle = withAlpha(C.muted, 0.35); ctx.lineWidth = 1;
+  ctx.beginPath(); corners.forEach((c, i) => (i ? ctx.lineTo(c.x, c.y) : ctx.moveTo(c.x, c.y))); ctx.closePath(); ctx.fill(); ctx.stroke();
+  const z0 = proj([0, 0, -1.25], cx, cy, s), z1 = proj([0, 0, 1.25], cx, cy, s);
+  ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = withAlpha(C.muted, 0.45);
+  ctx.beginPath(); ctx.moveTo(z0.x, z0.y); ctx.lineTo(z1.x, z1.y); ctx.stroke(); ctx.restore();
+  text(ctx, "⊙ zu dir", z1.x, z1.y + 10, C.muted, 10.5, "center", 500);
+  const fingers = [];
+  if (hs.thumb) fingers.push({ dir: hs.thumb, col: C.v, lab: "I", thick: 15 });
+  fingers.push({ dir: hs.index, col: C.B, lab: "B", thick: 12 });
+  if (hs.middle && !hs.hideMiddle) fingers.push({ dir: hs.middle, col: C.F, lab: "F", thick: 12 });
+  const items = fingers.map((f) => ({ f, z: proj(scale(f.dir, 0.6), cx, cy, s).z }));
+  items.push({ palm: true, z: 0.0 });
+  items.sort((a, b) => a.z - b.z);
+  for (const it of items) {
+    if (it.palm) {
+      const p = proj([0, 0, 0], cx, cy, s);
+      ctx.fillStyle = C.skin; ctx.strokeStyle = C.skinEdge; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 17 * p.k, 0, TAU); ctx.fill(); ctx.stroke();
+      continue;
+    }
+    const f = it.f;
+    const a = proj(scale(f.dir, 0.1), cx, cy, s), b = proj(scale(f.dir, 0.82), cx, cy, s);
+    const tip = proj(scale(f.dir, 1.12), cx, cy, s), lab = proj(scale(f.dir, 1.36), cx, cy, s);
+    const t = f.thick * (a.k + b.k) / 2;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = C.skinEdge; ctx.lineWidth = t + 3;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.strokeStyle = C.skin; ctx.lineWidth = t;
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    arrow(ctx, b.x, b.y, tip.x, tip.y, f.col, 3, 10);
+    text(ctx, f.lab, lab.x, lab.y, f.col, 13, "center", 700, C.mono);
+  }
+  if (!hs.thumb) text(ctx, "Kein Strom in Leiterseite 1: keine Kraft", cx, h - 14, C.F, 12, "center", 600);
+  if (hs.hideMiddle) text(ctx, "Mittelfinger = ?", cx, h - 14, C.F, 12, "center", 600, C.mono);
+  const key = [dirName(hs.thumb), dirName(hs.index), hs.hideMiddle ? "?" : dirName(hs.middle)].join("/");
+  if (key !== lastHandKey) {
+    lastHandKey = key;
+    $("#hand-fingers").innerHTML =
+      `<li><i style="background:var(--c-v)"></i><span>Daumen</span><span>I in Leiterseite 1: ${hs.thumb ? dirName(hs.thumb) : "kein Strom"}</span></li>` +
+      `<li><i style="background:var(--c-b)"></i><span>Zeigefinger</span><span>B: ${dirName(hs.index)}</span></li>` +
+      `<li><i style="background:var(--c-f)"></i><span>Mittelfinger</span><span>F auf Leiterseite 1: ${hs.hideMiddle ? "?" : hs.middle ? dirName(hs.middle) : "keine Kraft"}</span></li>`;
+  }
+}
+handCv.addEventListener("pointerdown", (e) => { HV.drag = { x: e.clientX, y: e.clientY, yaw: HV.yaw, pitch: HV.pitch }; handCv.setPointerCapture(e.pointerId); });
+handCv.addEventListener("pointermove", (e) => {
+  if (!HV.drag) return;
+  HV.yaw = HV.drag.yaw + (e.clientX - HV.drag.x) * 0.01;
+  HV.pitch = clamp(HV.drag.pitch + (e.clientY - HV.drag.y) * 0.01, -1.45, 1.45);
+});
+const endDrag = () => { HV.drag = null; };
+handCv.addEventListener("pointerup", endDrag); handCv.addEventListener("pointercancel", endDrag);
+$("#hand-reset").addEventListener("click", () => { HV.yaw = -0.55; HV.pitch = 0.38; });
+
+/* ================= UI-Verdrahtung ================= */
+const MODES = ["schleife", "kommutator", "werkstatt", "uebung"];
+const HINTS = {
+  schleife: "Die Schleifringe lassen den Strom immer in derselben Richtung durch die Schleife fließen. Mit „Umpolen“ vertauschst du Plus und Minus der Stromquelle.",
+  kommutator: "Der Kommutator polt den Strom in der Schleife nach jeder halben Umdrehung um. Die Kräfte drehen deshalb immer in dieselbe Richtung.",
+  werkstatt: "Mehr Windungen, mehr Strom und ein stärkeres Feld vergrößern die Kraft. Mehr Spulen machen den Lauf gleichmäßiger.",
+};
+function setMode(m) {
+  if (!MODES.includes(m)) m = "schleife";
+  mode = m;
+  const quiz = m === "uebung";
+  $$(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.mode === m)));
+  $$(".mode-panel").forEach((p) => (p.hidden = p.dataset.mode !== m));
+  $("#sim-panel").hidden = quiz; $("#quiz-panel").hidden = !quiz;
+  $$("#sim-panel [data-show]").forEach((el) => (el.hidden = !el.dataset.show.split(" ").includes(m)));
+  if (!quiz) {
+    $("#mode-hint").textContent = HINTS[m];
+    $("#formula").textContent = m === "werkstatt" ? "F = N · I · l · B" : "F = I · l · B";
+    M.phi = 0.35; M.om = 0; M.run = 0; M.nAvg = 0; M.held = false;
+  } else if (!Q.s) qNew();
+  lastHandKey = "";
+}
+$$(".tab").forEach((t) => t.addEventListener("click", (e) => { e.preventDefault(); setMode(t.dataset.mode); }));
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (MODES.includes(h) && h !== mode) setMode(h); });
+
+function bindRange(id, key, f) {
+  const el = $("#" + id);
+  const upd = () => { S[key] = parseFloat(el.value); $("#o-" + id).textContent = f(S[key]); };
+  el.addEventListener("input", upd); upd();
+}
+function bindRadio(name, obj, key, num, cb) {
+  $$(`input[name="${name}"]`).forEach((r) => {
+    r.addEventListener("change", () => { if (r.checked) { obj[key] = num ? parseFloat(r.value) : r.value; cb && cb(); } });
+    if (r.checked) obj[key] = num ? parseFloat(r.value) : r.value;
+  });
+}
+bindRange("c-i", "I", (x) => fmt(x, 1) + " A");
+bindRange("c-b", "B", (x) => fmt(x, 0) + " mT");
+bindRange("c-load", "load", (x) => fmt(x, 0) + " %");
+bindRadio("c-view", S, "view", false);
+bindRadio("c-pole", S, "b", true);
+bindRadio("c-pol", S, "s0", true);
+bindRadio("c-coils", S, "coils", true);
+bindRadio("c-n", S, "N", true);
+$("#c-slow").addEventListener("change", (e) => { S.slow = e.target.checked; });
+$("#c-forces").addEventListener("change", (e) => { S.forces = e.target.checked; });
+function setOn(on) { S.on = on; $("#c-on").textContent = on ? "Schalter öffnen (Strom aus)" : "Schalter schließen (Strom an)"; }
+$("#c-on").addEventListener("click", () => setOn(!S.on));
+function flip() { S.s0 = -S.s0; $(S.s0 > 0 ? "#c-pol-r" : "#c-pol-l").checked = true; }
+$("#c-flip").addEventListener("click", flip);
+window.addEventListener("keydown", (e) => {
+  if (e.code !== "Space" || mode !== "schleife") return;
+  const t = e.target, tag = t && t.tagName;
+  if (tag === "TEXTAREA" || tag === "SELECT" || (tag === "INPUT" && t.type === "text")) return;
+  e.preventDefault(); if (!e.repeat) flip();
+});
+$("#c-dead").addEventListener("click", () => { M.phi = PI / 2; M.om = 0; M.run = 0; M.held = false; setOn(true); });
+{
+  const ph = $("#c-phi");
+  ph.addEventListener("input", () => { M.held = true; M.phi = parseFloat(ph.value) * PI / 180; M.om = 0; });
+  const rel = () => { M.held = false; };
+  ph.addEventListener("change", rel); ph.addEventListener("pointerup", rel); ph.addEventListener("pointercancel", rel); ph.addEventListener("blur", rel);
+}
+$$("#q-answers button").forEach((b) => b.addEventListener("click", () => qAnswer(b.dataset.ans)));
+$("#q-next").addEventListener("click", qNew);
+bindRadio("q-level", Q, "level", true, () => {
+  $("#q-level-hint").textContent = Q.level === 1 ? "Die Schleife steht immer waagerecht." : "Die Schleife steht auch schräg oder senkrecht. Achtung, Totpunkt.";
+  qNew();
+});
+
+/* ================= Arbeitsaufträge ================= */
+const fields = $$(".tasks textarea, .tasks input[type=text], .tasks select");
+const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }, del(k) { try { localStorage.removeItem(k); } catch (e) {} } };
+fields.forEach((f) => {
+  const v = store.get("em-" + f.id); if (v !== null) f.value = v;
+  f.addEventListener("input", () => store.set("em-" + f.id, f.value));
+  f.addEventListener("change", () => store.set("em-" + f.id, f.value));
+});
+let clearArmed = false;
+$("#clear-answers").addEventListener("click", (e) => {
+  if (!clearArmed) { clearArmed = true; e.target.textContent = "Wirklich löschen?"; setTimeout(() => { clearArmed = false; e.target.textContent = "Alle Antworten löschen"; }, 3000); return; }
+  fields.forEach((f) => { f.value = ""; store.del("em-" + f.id); });
+  clearArmed = false; e.target.textContent = "Gelöscht";
+  setTimeout(() => { e.target.textContent = "Alle Antworten löschen"; }, 1500);
+});
+// Lösungen nur mit Lehrer-Code. Der Code steht nicht im Klartext hier, nur sein Prüfwert.
+{
+  const hc = (s) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) >>> 0; } return h; };
+  const tog = $("#sol-toggle"), box = $("#sol-code"), inp = $("#sol-input"), msg = $("#sol-msg");
+  const show = (on) => { document.body.classList.toggle("sol-on", on); tog.textContent = on ? "Lösungen ausblenden" : "Lösungen einblenden (für Lehrkräfte)"; };
+  tog.addEventListener("click", () => {
+    msg.textContent = "";
+    if (document.body.classList.contains("sol-on")) { show(false); return; }
+    box.hidden = !box.hidden; if (!box.hidden) inp.focus();
+  });
+  const check = () => {
+    const ok = hc(inp.value.replace(/\s+/g, "").toUpperCase()) === 2774384717;
+    inp.value = "";
+    if (ok) { box.hidden = true; show(true); msg.textContent = ""; } else { msg.textContent = "Der Code stimmt nicht."; inp.focus(); }
+  };
+  $("#sol-ok").addEventListener("click", check);
+  inp.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); check(); } });
+}
+
+/* ================= Hauptschleife ================= */
+const sim = $("#sim");
+// Mit der Maus lässt sich die Schleife direkt anfassen und drehen (am Handy: Regler).
+let grab = null;
+function ptrAngle(e) {
+  if (!lastView) return null;
+  const r = sim.getBoundingClientRect(), c = lastView.P([0, 0, 0]);
+  const dx = e.clientX - r.left - c.x, dy = e.clientY - r.top - c.y;
+  return { a: Math.atan2(-dy, dx), d: Math.hypot(dx, dy) / lastView.s };
+}
+sim.addEventListener("pointerdown", (e) => {
+  if (mode === "uebung" || e.pointerType === "touch") return;
+  const p = ptrAngle(e); if (!p || p.d > 0.85 || p.d < 0.08) return;
+  grab = { off: M.phi - p.a, last: p.a }; M.held = true; sim.setPointerCapture(e.pointerId); e.preventDefault();
+});
+sim.addEventListener("pointermove", (e) => {
+  const p = ptrAngle(e);
+  if (!grab) { sim.style.cursor = mode !== "uebung" && e.pointerType !== "touch" && p && p.d <= 0.85 && p.d >= 0.08 ? "grab" : ""; return; }
+  let d = p.a - grab.last; if (d > PI) d -= TAU; if (d < -PI) d += TAU;
+  grab.last = p.a; M.phi += d; M.om = 0; sim.style.cursor = "grabbing";
+});
+const release = () => { if (grab) { grab = null; M.held = false; sim.style.cursor = ""; } };
+sim.addEventListener("pointerup", release); sim.addEventListener("pointercancel", release);
+
+let lastT = performance.now(), roT = 0;
+function frame(t) {
+  const dt = Math.min(0.05, (t - lastT) / 1000); lastT = t;
+  const { ctx, w, h } = fit(sim);
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = C.stage; ctx.fillRect(0, 0, w, h);
+  const target = S.view === "3d" ? 1 : 0;
+  cam += clamp(target - cam, -dt * 2.6, dt * 2.6);
+  let hs;
+  if (mode === "uebung") { qDraw(ctx, w, h); hs = qHand(); }
+  else { step(dt); simDraw(ctx, w, h); hs = simHand(); }
+  drawHand(hs);
+  roT -= dt;
+  if (roT <= 0) { roT = 0.12; if (mode === "uebung") qReadouts(); else simReadouts(); }
+  requestAnimationFrame(frame);
+}
+setMode(MODES.includes(location.hash.slice(1)) ? location.hash.slice(1) : "schleife");
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
