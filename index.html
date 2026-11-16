@@ -221,9 +221,9 @@ kbd { font: 500 12px var(--font-mono); border: 1px solid var(--line); border-bot
           <li><p><span class="tag do">Beobachten</span>Schließe den Schalter und lass die Schleife aus der waagerechten Stellung los. Beschreibe die Bewegung. In welcher Stellung bleibt die Schleife stehen?</p>
             <textarea id="e1-3" rows="2" placeholder="Deine Antwort"></textarea>
             <p class="sol">Die Schleife dreht sich los, pendelt ein paar Mal hin und her und bleibt dann senkrecht stehen (90°, quer zu den Feldlinien). Sie macht keine ganze Umdrehung.</p></li>
-          <li><p><span class="tag do">Erklären</span>Wechsle zur Ansicht „Entlang der Achse“. Vergleiche die Kraftpfeile bei 0° und bei 90°. Warum dreht sich die Schleife bei 90° nicht weiter?</p>
+          <li><p><span class="tag do">Erklären</span>Wechsle zur Ansicht „Entlang der Achse“. Vergleiche die Kraftpfeile bei waagerechter Schleife mit denen in der Stellung, in der die Schleife stehen bleibt. Warum dreht sie sich dort nicht weiter?</p>
             <textarea id="e1-4" rows="3" placeholder="Deine Antwort"></textarea>
-            <p class="sol">Die Kräfte sind bei 90° genauso groß wie bei 0°. Sie ziehen die Schleife jetzt aber nur noch auseinander und drehen sie nicht mehr. Diese Stellung heißt Totpunkt. Schwingt die Schleife über den Totpunkt hinaus, drehen die Kräfte sie wieder zurück.</p></li>
+            <p class="sol">Die Kräfte sind in der senkrechten Stellung genauso groß wie in der waagerechten. Sie ziehen die Schleife jetzt aber nur noch auseinander und drehen sie nicht mehr. Diese Stellung heißt Totpunkt. Schwingt die Schleife über den Totpunkt hinaus, drehen die Kräfte sie wieder zurück.</p></li>
           <li><p><span class="tag do">Ausprobieren</span>Du bist jetzt der Motor-Chef: Drücke im richtigen Moment auf „Umpolen“ (oder die <kbd>Leertaste</kbd>). Schaffst du 5 Umdrehungen am Stück? In welchen Stellungen musst du umpolen?</p>
             <textarea id="e1-5" rows="2" placeholder="Deine Antwort und dein Rekord"></textarea>
             <p class="sol">Man muss immer dann umpolen, wenn die Schleife durch die senkrechte Stellung (den Totpunkt) schwingt, also zweimal pro Umdrehung. Dann drehen die Kräfte die Schleife weiter statt zurück.</p></li>
@@ -272,7 +272,7 @@ kbd { font: 500 12px var(--font-mono); border: 1px solid var(--line); border-bot
       </section>
 
       <section class="card tasks mode-panel" data-mode="werkstatt" hidden>
-        <h2><span>Zusatzauftrag</span><span>Motor-Werkstatt</span></h2>
+        <h2><span>Zusatzauftrag · Station 3</span><span>Motor-Werkstatt</span></h2>
         <p class="lead">Hier kannst du den Motor umbauen: mehr Spulen auf dem Anker, mehr Windungen pro Spule und eine Bremse als Last. Bei mehreren Spulen hat der Kommutator für jede Spule ein eigenes Lamellenpaar. Es fließt immer nur durch die Spule Strom, die gerade am günstigsten steht.</p>
         <ol class="tasklist">
           <li><p><span class="tag do">Vergleichen</span>Wähle 1 Spule und drücke „Auf Totpunkt stellen“. Wiederhole den Versuch mit 3 Spulen. Was beobachtest du?</p>
@@ -283,10 +283,10 @@ kbd { font: 500 12px var(--font-mono); border: 1px solid var(--line); border-bot
             <p class="sol">Bei 1 Spule fällt die Drehwirkung zweimal pro Umdrehung auf null. Bei 2 und 3 Spulen bleibt sie immer groß und schwankt nur wenig. Der Motor läuft gleichmäßiger und hat keinen Totpunkt mehr.</p></li>
           <li><p><span class="tag do">Testen</span>Stelle I = 2,0 A, B = 100 mT und die Last auf 20 % ein. Welcher Motor schafft das: 1 Spule oder 3 Spulen (jeweils 1 Windung)?</p>
             <textarea id="e3-3" rows="2" placeholder="Deine Antwort"></textarea>
-            <p class="sol">Der Motor mit 1 Spule bleibt am Totpunkt hängen. Der Motor mit 3 Spulen läuft weiter (etwa 40 Umdrehungen pro Minute).</p></li>
+            <p class="sol">Der Motor mit 1 Spule bleibt kurz vor dem Totpunkt stehen, weil die Drehwirkung dort zu klein für die Last wird. Der Motor mit 3 Spulen läuft weiter (etwa 40 Umdrehungen pro Minute).</p></li>
           <li><p><span class="tag do">Tüfteln</span>Erhöhe die Last auf 50 %. Finde zwei verschiedene Umbauten, mit denen der Motor die Last trotzdem schafft.</p>
             <textarea id="e3-4" rows="2" placeholder="Umbau 1: … Umbau 2: …"></textarea>
-            <p class="sol">Zum Beispiel: 3 Spulen mit je 3 Windungen. Oder 3 Spulen mit 2 Windungen und dazu größere Stromstärke oder stärkerer Magnet. Mehr Windungen, mehr Strom und ein stärkeres Feld vergrößern die Kraft (F = N · I · l · B).</p></li>
+            <p class="sol">Zum Beispiel: 3 Spulen mit je 2 oder 3 Windungen. Oder 3 Spulen mit 1 Windung und I = 4,0 A. Mehr Windungen, mehr Strom und ein stärkeres Feld vergrößern die Kraft (F = N · I · l · B). Mit nur 1 Spule ist es viel schwerer, weil der Motor am Totpunkt Schwung braucht.</p></li>
           <li><p><span class="tag plus">Rekord</span>Baue ohne Last den schnellsten Motor. Notiere deine Einstellungen und die Drehzahl.</p>
             <input type="text" id="e3-5" placeholder="z. B. 3 Spulen, … Windungen, I = … A, B = … mT: … U/min"></li>
           <li><p><span class="tag plus">Zusatz</span>Nenne drei Geräte aus dem Alltag, in denen ein Elektromotor steckt. Was haben echte Motoren, was unser Modell nicht hat?</p>
@@ -296,7 +296,7 @@ kbd { font: 500 12px var(--font-mono); border: 1px solid var(--line); border-bot
       </section>
 
       <section class="card tasks mode-panel" data-mode="uebung" hidden>
-        <h2><span>Arbeitsauftrag · Station 3</span><span>Übung</span></h2>
+        <h2><span>Arbeitsauftrag · Station 4</span><span>Übung</span></h2>
         <ol class="tasklist">
           <li><p><span class="tag do">Üben</span>Löse mindestens 10 Aufgaben auf Stufe 1. Benutze dabei deine eigene rechte Hand. Trage dein Ergebnis ein.</p>
             <input type="text" id="e4-1" placeholder="z. B. 8 von 10 richtig"></li>
@@ -965,6 +965,7 @@ const HINTS = {
 };
 function setMode(m) {
   if (!MODES.includes(m)) m = "schleife";
+  if (mode === "schleife" && m !== "schleife" && S.s0 < 0) { S.s0 = 1; $("#c-pol-r").checked = true; }
   mode = m;
   const quiz = m === "uebung";
   $$(".tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.mode === m)));
@@ -1016,7 +1017,7 @@ $("#c-dead").addEventListener("click", () => { M.phi = PI / 2; M.om = 0; M.run =
 {
   const ph = $("#c-phi");
   ph.addEventListener("input", () => { M.held = true; M.phi = parseFloat(ph.value) * PI / 180; M.om = 0; });
-  const rel = () => { M.held = false; };
+  const rel = () => { if (M.held) M.phi += 0.012; M.held = false; };
   ph.addEventListener("change", rel); ph.addEventListener("pointerup", rel); ph.addEventListener("pointercancel", rel); ph.addEventListener("blur", rel);
 }
 $$("#q-answers button").forEach((b) => b.addEventListener("click", () => qAnswer(b.dataset.ans)));
